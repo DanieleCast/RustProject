@@ -1,0 +1,14 @@
+[package]
+name = "kruger_migration"
+version = "0.1.0"
+authors = ["<decastanob@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+actix-web = "3"
+actix-rt = "1"
+serde = {version="1.0.123",features=["derive"]}
+csv = "1"
+postgres = "0.19.0"
