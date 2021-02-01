@@ -4,9 +4,9 @@ extern crate postgres;
 use postgres::{Client, NoTls};
 use csv::ReaderBuilder;
 use crate::models::Status;
+use crate::models::Row;
 use actix_web::{web, App, Responder, HttpServer};
 use std::io;
-
 use std::env;
 use std::error::Error;
 use std::ffi::OsString;
@@ -34,13 +34,15 @@ fn get_first_arg() -> Result<OsString, Box<dyn Error>> {
 //Reading the CSV File from the Path.
 
 fn run() -> Result<(), Box<dyn Error>> {
+ 
   let file_path = get_first_arg()?;
   let file = File::open(file_path)?;
   let mut rdr = ReaderBuilder::new().delimiter(b';').from_reader(file);
-  //let mut rdr = csv::Reader::from_reader(file);
+  
   for result in rdr.records() {
       let record = result?;
-      println!("{:?}", record);
+      let row: Row = record.deserialize(None)?;
+      println!("{:?}{:?}{:?}{:?}{:?}{:?}{:?}{:?}",row.iden,row.name,row.gender,row.civile,row.birth,row.phone,row.dirr,row.mail);
   }
   Ok(())
 }
@@ -82,6 +84,6 @@ async fn main() ->io::Result<()>  {
     })
     .bind("127.0.0.1:8080")?
     .run()
-    .await
+    .await 
     
 }
