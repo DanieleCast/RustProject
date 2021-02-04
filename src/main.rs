@@ -1,7 +1,10 @@
 mod models;
+mod sql_fun;
+use crate::sql_fun::create_table;
+use crate::sql_fun::write_in_db;
 extern crate csv;
-extern crate postgres;
-use postgres::{Client, NoTls};
+//extern crate postgres;
+//use postgres::{Client, NoTls};
 use csv::ReaderBuilder;
 use crate::models::Status;
 use crate::models::Row;
@@ -12,8 +15,6 @@ use std::error::Error;
 use std::ffi::OsString;
 use std::fs::File;
 use std::process;
-//---------------------------------------------------------------------------------
-//FUNCTIONS
 
 //Server Response
 async fn status() -> impl Responder{
@@ -34,24 +35,8 @@ fn get_first_arg() -> Result<OsString, Box<dyn Error>> {
 
 fn run() -> Result<(), Box<dyn Error>> {
   
-      //Conecting to Postgres DB.
-      let mut client = Client::connect("host=127.0.0.1 dbname=citizen port=5432 user=postgres password='password'", NoTls).expect("Connection DB Error");
-      client.batch_execute("
-      CREATE TABLE IF NOT EXISTS PERSONA (
-          id              SERIAL PRIMARY KEY,
-          ident           VARCHAR,
-          nombre          VARCHAR,
-          genero          VARCHAR,
-          e_civil         VARCHAR,
-          nacimiento      VARCHAR,
-          tel             VARCHAR,
-          direccion       VARCHAR,
-          email           VARCHAR NOT NULL,
-          validado        BOOLEAN,
-          observacion     VARCHAR
-          )
-          ").expect("Create Table Error");
-
+  //Conecting to Postgres DB.
+  create_table();
   let file_path = get_first_arg()?;
   let file = File::open(file_path)?;
   let mut rdr = ReaderBuilder::new().delimiter(b';').has_headers(false).from_reader(file);
@@ -59,34 +44,20 @@ fn run() -> Result<(), Box<dyn Error>> {
   for result in rdr.records() {
       let record = result?;
       let row: Row = record.deserialize(None)?;
-      //println!("{:?}{:?}{:?}{:?}{:?}{:?}{:?}{:?}",row.iden,row.name,row.gender,row.civile,row.birth,row.phone,row.dirr,row.mail);
-      
-      client.execute(
-        "INSERT INTO PERSONA (ident, nombre, genero,e_civil, nacimiento,tel,direccion,email) 
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)",
-        &[&row.iden,&row.name.to_uppercase(),&row.gender,&row.civile,&row.birth,&row.phone,&row.dirr,&row.mail],
-      )?;
-    /*if (row.name.len()<=0) || (row.phone.len() < 6 ) || (row.phone.len() > 10) || (row.mail.len() < 5 ){
-      println!("hay datos invalidos");
-    } */ 
+      write_in_db(row);
   }
   Ok(())
 }
-
 //----------------------------------------------------------------------------
 //                  MAIN ()
-
 #[actix_rt::main]
 async fn main() ->io::Result<()>  {
 
     println!("Servidor iniciado en LocalHost:8080");
-
-
     if let Err(err) = run() {
       println!("{}", err);
       process::exit(1);
     }
-    
     HttpServer::new(||{
         App::new()
             .route("/",web::get().to(status))
