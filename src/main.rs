@@ -3,8 +3,6 @@ mod sql_fun;
 use crate::sql_fun::create_table;
 use crate::sql_fun::write_in_db;
 extern crate csv;
-//extern crate postgres;
-//use postgres::{Client, NoTls};
 use csv::ReaderBuilder;
 use crate::models::Status;
 use crate::models::Row;
